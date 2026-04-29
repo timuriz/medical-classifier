@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+
+
+
+# Project-specific ignores
+*.pth
+*.pt
+*.pkl
+data/
+models/
+isic_100_images/
+.DS_Store
+.env
+.env.local
+
+# Development/planning docs
+roadmap.txt
+overview.txt
+download_images.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
