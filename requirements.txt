@@ -1,0 +1,22 @@
+# Minimal requirements for Medical Image Classifier
+# Python 3.9+ compatible
+
+# Core ML
+torch
+torchvision
+numpy
+scikit-learn
+
+# Images
+Pillow
+opencv-python
+
+# API
+FastAPI
+uvicorn
+python-multipart
+
+# Extras
+grad-cam
+tqdm
+requests
