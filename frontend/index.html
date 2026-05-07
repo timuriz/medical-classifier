@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Image Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.active {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .results {
+            display: none;
+            gap: 30px;
+        }
+
+        .results.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .result-section h2 {
+            font-size: 16px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        .image-container {
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .prediction-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .prediction-label {
+            font-size: 13px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .prediction-class {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+
+        .prediction-confidence {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .confidence-value {
+            font-size: 20px;
+            font-weight: 600;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .probabilities {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .probability-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .probability-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .probability-label {
+            font-weight: 500;
+            color: #333;
+            text-transform: capitalize;
+        }
+
+        .probability-bar {
+            flex: 1;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+
+        .probability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .probability-value {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .results.show {
+                grid-template-columns: 1fr;
+            }
+
+            .prediction-class {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Medical Image Classifier</h1>
+        <p class="subtitle">Upload a skin lesion image to get diagnosis prediction with Grad-CAM visualization</p>
+
+        <div class="error" id="error"></div>
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept="image/*">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-subtext">PNG, JPG, GIF up to 10MB</div>
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Analyzing image...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-section">
+                <h2>Original Image</h2>
+                <div class="image-container">
+                    <img id="originalImage" src="" alt="Original image">
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h2>Prediction</h2>
+                <div class="prediction-box">
+                    <div class="prediction-label">Diagnosis</div>
+                    <div class="prediction-class" id="predictionClass">-</div>
+                    <div class="prediction-confidence">
+                        Confidence
+                        <span class="confidence-value" id="predictionConfidence">-</span>
+                    </div>
+                </div>
+
+                <div class="probabilities" id="probabilitiesContainer">
+                    <!-- Filled by JavaScript -->
+                </div>
+            </div>
+
+            <div class="result-section" style="grid-column: 1 / -1;">
+                <h2>Grad-CAM Heatmap</h2>
+                <div class="image-container">
+                    <img id="heatmapImage" src="" alt="Grad-CAM heatmap">
+                </div>
+                <p style="color: #666; font-size: 13px; text-align: center;">
+                    Red regions indicate areas the model focused on for the prediction
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorDiv = document.getElementById('error');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('active');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('active');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('active');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file');
+                return;
+            }
+
+            // Show original image
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                document.getElementById('originalImage').src = e.target.result;
+                
+                // Send to API
+                await predictImage(file);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function predictImage(file) {
+            loading.style.display = 'block';
+            results.classList.remove('show');
+            errorDiv.classList.remove('show');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('http://localhost:8000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display prediction
+                document.getElementById('predictionClass').textContent = 
+                    data.prediction.charAt(0).toUpperCase() + data.prediction.slice(1);
+                
+                document.getElementById('predictionConfidence').textContent = 
+                    (data.confidence * 100).toFixed(1) + '%';
+
+                // Display probabilities
+                const probContainer = document.getElementById('probabilitiesContainer');
+                probContainer.innerHTML = '';
+
+                for (const [className, probability] of Object.entries(data.probabilities)) {
+                    const percent = (probability * 100).toFixed(1);
+                    probContainer.innerHTML += `
+                        <div class="probability-item">
+                            <span class="probability-label">${className}</span>
+                            <div class="probability-bar">
+                                <div class="probability-fill" style="width: ${percent}%"></div>
+                            </div>
+                            <span class="probability-value">${percent}%</span>
+                        </div>
+                    `;
+                }
+
+                // Display heatmap
+                document.getElementById('heatmapImage').src = 
+                    'data:image/png;base64,' + data.heatmap;
+
+                results.classList.add('show');
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to get prediction. Make sure the API is running on http://localhost:8000');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>
