@@ -41,3 +41,13 @@ def generate_gradcam(model, image_tensor, original_image):
     
     # 6. Return as PIL Image
     return Image.fromarray(visualization)
+
+def image_to_base64(image):
+    """Convert PIL Image to base64 string"""
+    import io
+    import base64
+    
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return img_str
