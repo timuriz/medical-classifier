@@ -1,0 +1,57 @@
+.prediction-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+}
+
+.prediction-label {
+  font-size: 13px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.prediction-class {
+  font-size: 40px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-transform: capitalize;
+}
+
+.confidence-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confidence-label {
+  font-size: 13px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.confidence-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .prediction-card {
+    padding: 20px;
+  }
+
+  .prediction-class {
+    font-size: 28px;
+  }
+
+  .confidence-value {
+    font-size: 24px;
+  }
+}
