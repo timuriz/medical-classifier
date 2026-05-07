@@ -4,6 +4,7 @@ from torchvision import transforms
 from torchvision.models import efficientnet_b0
 from PIL import Image
 import numpy as np
+from explainability import generate_gradcam
 
 class ModelInference:
     def __init__(self, model_path):
@@ -39,16 +40,23 @@ class ModelInference:
             probabilities = torch.softmax(output, dim=1)
             confidence, predicted = torch.max(probabilities, 1)
 
+        heatmap_image = generate_gradcam(
+            self.model,
+            image_tensor,
+            image
+        )
+
         class_names = ["melanoma", "nevus", "seborrheic_keratosis"]
         return {
             "prediction": class_names[predicted.item()],
             "confidence": confidence.item(),
-            "probabilities": probabilities.squeeze().tolist()
+            "probabilities": probabilities.squeeze().tolist(),
+            "heatmap": heatmap_image
         }
 
 
 
 
 model = ModelInference('models/efficientnet_isic_best.pth')
-pred = model.predict(Image.open('data/melanoma/ISIC_0024630.jpg'))
+pred = model.predict(Image.open('data/nevus/isic_0000049.jpg'))
 print(pred)
