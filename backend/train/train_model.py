@@ -36,7 +36,7 @@ CONFIG = {
     "learning_rate": 1e-4,
     "val_split": 0.2,
     "test_split": 0.1,
-    "num_workers": 4,
+    "num_workers": 0,
 }
 
 # Device
