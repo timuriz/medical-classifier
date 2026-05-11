@@ -99,40 +99,75 @@ class MedicalImageDataset(Dataset):
 def get_transforms(split="train"):
     """
     Get torchvision transforms for train/val/test.
-    
+
+    Training uses stronger augmentations to improve generalization. Val/test stay
+    deterministic (resize + normalize) to match inference.
+
     Args:
         split (str): "train", "val", or "test"
-    
+
     Returns:
         torchvision.transforms.Compose object
     """
-    
+
+    imagenet_norm = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
+
     if split == "train":
-        # Aggressive augmentation for training
-        return transforms.Compose([
+        # Stronger augments: scale/crop + affine + color + mild regularization.
+        # Kept conservative for lesions (no heavy RandAugment) so structure stays plausible.
+        return transforms.Compose(
+            [
+                # Spatial: slight scale/crop jitter (lesions often near-centered in HAM10000)
+                transforms.RandomResizedCrop(
+                    size=224,
+                    scale=(0.85, 1.0),
+                    ratio=(0.92, 1.08),
+                ),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomVerticalFlip(p=0.3),
+                transforms.RandomAffine(
+                    degrees=15,
+                    translate=(0.06, 0.06),
+                    scale=(0.95, 1.05),
+                    shear=(-5, 5),
+                    fill=0,
+                ),
+                # Photometric
+                transforms.ColorJitter(
+                    brightness=0.25,
+                    contrast=0.25,
+                    saturation=0.2,
+                    hue=0.02,
+                ),
+                transforms.RandomApply(
+                    [transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 1.5))],
+                    p=0.25,
+                ),
+                transforms.RandomAdjustSharpness(sharpness_factor=1.8, p=0.2),
+                transforms.RandomAutocontrast(p=0.1),
+                transforms.ToTensor(),
+                # Light occlusion regularization in [0, 1] space (before ImageNet norm)
+                transforms.RandomErasing(
+                    p=0.12,
+                    scale=(0.02, 0.06),
+                    ratio=(0.3, 3.0),
+                    value="random",
+                ),
+                imagenet_norm,
+            ]
+        )
+
+    # Val / test: deterministic, aligned with typical inference (resize to 224)
+    return transforms.Compose(
+        [
             transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.3),
-            transforms.RandomRotation(degrees=20),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1),
-            transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 1.0)),
             transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],  # ImageNet normalization
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
-    
-    else:
-        # No augmentation for val/test
-        return transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
+            imagenet_norm,
+        ]
+    )
 
 
 if __name__ == "__main__":
